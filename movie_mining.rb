@@ -16,10 +16,11 @@ agent = Mechanize.new()
 
 chosen = false
 
+puts "Добрейший вечерок. Захотелось посмоть фильм?"
+sleep 0.3
+puts "Окей. Выбери один из #{algorithms_hash.size} алгоритмов:"
+
 until chosen
-  puts "Добрейший вечерок. Захотелось посмоть фильм?"
-  sleep 0.3
-  puts "Окей. Выбери один из #{algorithms_hash.size} алгоритмов:"
 
   algorithms_hash.each do |key, value|
     puts "Алгоритм #{key}"
