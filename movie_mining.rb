@@ -39,10 +39,21 @@ until chosen
 
   movie_title = film_snippet.search("meta[itemprop='name'] @content")
   movie_year_country = film_snippet.search("div[@class='film-snippet__info']").text
-  movie_link = film_snippet.search("div[@class='film-snippet__media']")
-  print movie_link
-  abort
+  movie_link = film_snippet.search("div[@class='film-snippet__media'] a @href")
 
-  a = STDIN.gets
+  puts
+  puts "========="
+  puts "Фильм: #{movie_title}"
+  puts "Страна: #{movie_year_country}"
+  puts "Ссылка: #{movie_link}" # todo opening in a web browsers
+  puts
 
+  usr_decision = ''
+
+  while usr_decision != 'Y' && usr_decision != "N" do
+    puts "Искать другой фильм? (Y/N)"
+    usr_decision = STDIN.gets.upcase.chomp
+  end
+
+  chosen = true if usr_decision == "N"
 end
