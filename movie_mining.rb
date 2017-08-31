@@ -1,3 +1,8 @@
+# Просмотр всех возможных страниц - done
+# За одно выполнение. программа должна один раз обращаться к серверу
+# При отказе смотреть фильм, он сохраняется и больше никогда не показывается на протяжении запуска
+# Поймать ошибку доступа
+
 require 'mechanize'
 require 'json'
 
@@ -33,8 +38,33 @@ until chosen
     usr_alg = "" if usr_alg <= 0
   end
 
-  page = agent.get(algorithms_hash["#{usr_alg}"])
-  film_snippet = page.search("//div[starts-with(@class, 'film-snippet film-snippet_in-catalogue film-snippet_type_movie')]").to_a.sample
+  page_uniq = true
+  count = 0
+
+  while page_uniq do
+    count += 1
+
+    page = agent.get(algorithms_hash["#{usr_alg}"] + "&page=#{count}")
+    film_snippet = page.search("//div[starts-with(@class, 'film-snippet film-snippet_in-catalogue film-snippet_type_movie')]")
+
+    break if film_snippet.nil?
+
+    if count == 1
+      first_req = film_snippet.text[0..40]
+      film_snippet_common = film_snippet
+    else
+      if film_snippet.text[0..40] != first_req
+        film_snippet_common += film_snippet
+        puts count
+        break if count > 50
+      else
+        page_uniq = false
+      end
+    end
+  end
+  # print film_snippet_common.search("meta[itemprop='name'] @content").text.split("\n")
+  # puts film_snippet_common.search("meta[itemprop='name'] @content")
+  # abort
 
   abort "ACCESS DENIED" if film_snippet.nil?
 
