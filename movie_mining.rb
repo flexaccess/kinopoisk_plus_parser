@@ -11,38 +11,93 @@ require 'date'
 
 date = Date.today
 
-def transformator(*params)
+def film_parser(random_alhoritm)
+  def transformator(*params)
 
-  def get_new_element_to_hash(new_element, arry, name_hash)
-    count = 0
-    arry_size = arry.size
+    def get_new_element_to_hash(new_element, arry, name_hash)
+      count = 0
+      arry_size = arry.size
 
-    new_element.each do |item_new_element|
-      arry[count][name_hash] = item_new_element.text.to_s
-      count += 1
-      break if count >= arry_size
+      new_element.each do |item_new_element|
+        arry[count][name_hash] = item_new_element.text.to_s
+        count += 1
+        break if count >= arry_size
+      end
+
+      return arry
     end
 
+    arry = []
+    i = 1
+
+    loop do
+      arry << {}
+      i += 1
+      break if i > params[0].size
+    end
+
+    count = 1
+
+    params.each do |param|
+      get_new_element_to_hash(param, arry, ("param" + count.to_s).to_sym)
+      count += 1
+    end
+    
     return arry
   end
 
-  arry = []
-  i = 1
+  page_uniq = true
+  count = 0
 
-  loop do
-    arry << {}
-    i += 1
-    break if i > params[0].size
-  end
-
-  count = 1
-
-  params.each do |param|
-    get_new_element_to_hash(param, arry, ("param" + count.to_s).to_sym)
+  while page_uniq do
+    
     count += 1
+
+    page = agent.get(algorithms_hash["#{random_alhoritm}"] + "&page=#{count}")
+    film_snippet = page.search("//div[starts-with(@class, 'film-snippet film-snippet_in-catalogue film-snippet_type_movie')]")
+
+    break if film_snippet.nil?
+
+    if count == 1
+      first_req = film_snippet.text[0..40]
+      film_snippet_common = film_snippet
+    else
+      if film_snippet.text[0..40] != first_req
+        film_snippet_common += film_snippet
+        puts count
+        break if count > 50
+      else
+        page_uniq = false
+      end
+    end
   end
-  
-  return arry
+
+  title =         film_snippet_common.search("meta[itemprop='name'] @content")
+  year_country =  film_snippet_common.search("div[@class='film-snippet__info']")
+  link =          film_snippet_common.search("div[@class='film-snippet__media'] a @href")
+  img =           film_snippet_common.search("img.image @src")
+
+  abort "\nERROR: Big Dick\n\n" if film_snippet_common.empty?
+
+  films = transformator(title, year_country, link, img) # здесь мы получаем большой массив с рассорированными параметрами
+
+  hash_films = {date: date.strftime("%F"), data: films}
+
+  f = File.new(film_by_alhoritm, 'w')
+  f.puts(hash_films.to_json)
+  f.close
+
+  puts 'Окей, я записал все спарсенное в файл.'
+end
+
+def random_film(content)
+  size = content['data'].size
+  random = rand(size) + 1
+
+  film = content['data'][random]
+
+  string = "Фильм: #{film['param1'], film['param2']}"
+  return string
 end
 
 file_path = File.dirname(__FILE__)
@@ -85,62 +140,17 @@ if File.exist?(film_by_alhoritm)
   if subtr_date < 7 + random_alhoritm
 
     puts 'Да, дата в порядке, можно выбирать случайный фильм!'
+    puts random_film(content)
 
   else
 
     puts 'Нет, с датой беда, слишком старая, нужно парсить по новой!'
+    film_parser(random_alhoritm)
+    puts random_film(content)
 
   end
 
 else
-  puts 'Нет, такого файла нет. И тоже нужно парсить по новой!'
+  film_parser(random_alhoritm)
+  puts random_film(content)
 end
-
-abort
-
-page_uniq = true
-count = 0
-
-# while page_uniq do
-#   count += 1
-
-#   page = agent.get(algorithms_hash["#{random_alhoritm}"] + "&page=#{count}")
-#   film_snippet = page.search("//div[starts-with(@class, 'film-snippet film-snippet_in-catalogue film-snippet_type_movie')]")
-
-#   break if film_snippet.nil?
-
-#   if count == 1
-#     first_req = film_snippet.text[0..40]
-#     film_snippet_common = film_snippet
-#   else
-#     if film_snippet.text[0..40] != first_req
-#       film_snippet_common += film_snippet
-#       puts count
-#       break if count > 50
-#     else
-#       page_uniq = false
-#     end
-#   end
-# end
-
-page = agent.get(algorithms_hash["#{random_alhoritm}"] + "&page=#{count}")
-film_snippet = page.search("//div[starts-with(@class, 'film-snippet film-snippet_in-catalogue film-snippet_type_movie')]")
-
-
-title =         film_snippet.search("meta[itemprop='name'] @content")
-year_country =  film_snippet.search("div[@class='film-snippet__info']")
-link =          film_snippet.search("div[@class='film-snippet__media'] a @href")
-img =           film_snippet.search("img.image @src")
-
-abort "\nERROR: Big Dick\n\n" if film_snippet.empty?
-
-films = transformator(title, year_country, link, img) # здесь мы получаем большой массив с рассорированными параметрами
-
-hash_films = {date: date.strftime("%F"), data: films}
-
-f = File.new(film_by_alhoritm, 'w')
-f.puts(hash_films.to_json)
-f.close
-
-puts 'Окей, я записал все спарсенное в файл.'
-abort
