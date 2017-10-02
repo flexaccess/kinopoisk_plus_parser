@@ -1,6 +1,7 @@
 # RUBY PARSER FOT PLUS.KINOPOISK.RU
 
 `Ruby: 2.3.1`
+
 `Gem Mechanize: 2.7.5`
 
 -----------------------------
