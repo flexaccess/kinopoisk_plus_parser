@@ -1,17 +1,10 @@
-# Просмотр всех возможных страниц - done
-# За одно выполнение. программа должна один раз обращаться к серверу
-# При отказе смотреть фильм, он сохраняется и больше никогда не показывается на протяжении запуска
-# Поймать ошибку доступа
-
-# Mechanize::Page
-
 require 'mechanize'
 require 'json'
 require 'date'
 
 date = Date.today
 
-def film_parser(random_alhoritm)
+def film_parser(random_alhoritm, algorithms_hash, date, film_by_alhoritm)
   def transformator(*params)
 
     def get_new_element_to_hash(new_element, arry, name_hash)
@@ -28,21 +21,26 @@ def film_parser(random_alhoritm)
     end
 
     arry = []
-    i = 1
 
-    loop do
-      arry << {}
-      i += 1
-      break if i > params[0].size
+    unless params[0].nil?
+      i = 1
+
+      loop do
+        arry << {}
+        i += 1
+        break if i > params[0].size
+      end
+
+      count = 1
+
+      params.each do |param|
+        get_new_element_to_hash(param, arry, ("param" + count.to_s).to_sym)
+        count += 1
+      end
+    else
+      arry << 'ERROR: EMPTY PARAMS FOR GENERATE ARRAY'
     end
-
-    count = 1
-
-    params.each do |param|
-      get_new_element_to_hash(param, arry, ("param" + count.to_s).to_sym)
-      count += 1
-    end
-    
+      
     return arry
   end
 
@@ -53,10 +51,11 @@ def film_parser(random_alhoritm)
     
     count += 1
 
+    agent = Mechanize.new()
     page = agent.get(algorithms_hash["#{random_alhoritm}"] + "&page=#{count}")
     film_snippet = page.search("//div[starts-with(@class, 'film-snippet film-snippet_in-catalogue film-snippet_type_movie')]")
 
-    break if film_snippet.nil?
+    break if film_snippet.empty?
 
     if count == 1
       first_req = film_snippet.text[0..40]
@@ -72,14 +71,21 @@ def film_parser(random_alhoritm)
     end
   end
 
-  title =         film_snippet_common.search("meta[itemprop='name'] @content")
-  year_country =  film_snippet_common.search("div[@class='film-snippet__info']")
-  link =          film_snippet_common.search("div[@class='film-snippet__media'] a @href")
-  img =           film_snippet_common.search("img.image @src")
+  unless film_snippet_common.nil?
 
-  abort "\nERROR: Big Dick\n\n" if film_snippet_common.empty?
+    title =         film_snippet_common.search("meta[itemprop='name'] @content")
+    year_country =  film_snippet_common.search("div[@class='film-snippet__info']")
+    link =          film_snippet_common.search("div[@class='film-snippet__media'] a @href")
+    img =           film_snippet_common.search("img.image @src")
 
-  films = transformator(title, year_country, link, img) # здесь мы получаем большой массив с рассорированными параметрами
+    abort "\nERROR: Big Dick\n\n" if film_snippet_common.empty?
+
+    films = transformator(title, year_country, link, img) # здесь мы получаем большой массив с рассорированными параметрами
+
+  else
+    films = transformator()
+  end
+
 
   hash_films = {date: date.strftime("%F"), data: films}
 
@@ -91,13 +97,17 @@ def film_parser(random_alhoritm)
 end
 
 def random_film(content)
-  size = content['data'].size
-  random = rand(size) + 1
+  unless content['data'][0].is_a?String
+    size = content['data'].size
+    random = rand(size) + 1
 
-  film = content['data'][random]
+    film = content['data'][random]
 
-  string = "Фильм: #{film['param1'], film['param2']}"
-  return string
+    done_string = "Фильм: #{film['param1']}, #{film['param2']}"
+  else
+    done_string = content['data'][0]
+  end
+  return done_string
 end
 
 file_path = File.dirname(__FILE__)
@@ -112,8 +122,6 @@ end
 algorithms_hash = JSON.parse(algorithms_data)
 # random_alhoritm = rand(algorithms_hash.size) + 1
 random_alhoritm = 4
-
-agent = Mechanize.new()
 
 puts "Добрейший вечерок. Захотелось посмоть фильм?"
 sleep 0.3
@@ -145,12 +153,12 @@ if File.exist?(film_by_alhoritm)
   else
 
     puts 'Нет, с датой беда, слишком старая, нужно парсить по новой!'
-    film_parser(random_alhoritm)
+    film_parser(random_alhoritm, algorithms_hash, date, film_by_alhoritm)
     puts random_film(content)
 
   end
 
 else
-  film_parser(random_alhoritm)
+  film_parser(random_alhoritm, algorithms_hash, date, film_by_alhoritm)
   puts random_film(content)
 end
