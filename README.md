@@ -45,12 +45,12 @@
 		    	"param3": "https://plus.kinopoisk.ru/film/370/",
 		    	"param4":"//avatars.mds.yandex.net/get-kino-vod-films-gallery/33804/2a00000151734e3f7412fd167b563973c1c2/280x178"
 		    },
-	    	{
-	    		"param1":"Умница Уилл Хантинг",
-	    		"param2":"США, 1997",
-	    		"param3":"https://plus.kinopoisk.ru/film/539/",
-	    		"param4":"//avatars.mds.yandex.net/get-kino-vod-films-gallery/28788/2a0000015184de4cc54088d640d3d592e845/280x178"
-	    	}
+		    {
+		    	"param1":"Умница Уилл Хантинг",
+		    	"param2":"США, 1997",
+		    	"param3":"https://plus.kinopoisk.ru/film/539/",
+		    	"param4":"//avatars.mds.yandex.net/get-kino-vod-films-gallery/28788/2a0000015184de4cc54088d640d3d592e845/280x178"
+		    }
 	    ]
   	}
 
