@@ -47,11 +47,12 @@ def film_parser(random_alhoritm, algorithms_hash, date, film_by_alhoritm)
   page_uniq = true
   count = 0
 
+  agent = Mechanize.new()
+
   while page_uniq do
     
     count += 1
 
-    agent = Mechanize.new()
     page = agent.get(algorithms_hash["#{random_alhoritm}"] + "&page=#{count}")
     film_snippet = page.search("//div[starts-with(@class, 'film-snippet film-snippet_in-catalogue film-snippet_type_movie')]")
 
@@ -86,20 +87,17 @@ def film_parser(random_alhoritm, algorithms_hash, date, film_by_alhoritm)
     films = transformator()
   end
 
-
   hash_films = {date: date.strftime("%F"), data: films}
 
   f = File.new(film_by_alhoritm, 'w')
   f.puts(hash_films.to_json)
   f.close
-
-  puts 'Окей, я записал все спарсенное в файл.'
 end
 
 def random_film(content)
   unless content['data'][0].is_a?String
     size = content['data'].size
-    random = rand(size) + 1
+    random = rand(size)
 
     film = content['data'][random]
 
@@ -108,6 +106,13 @@ def random_film(content)
     done_string = content['data'][0]
   end
   return done_string
+end
+
+def get_json_content(film_by_alhoritm)
+  f = File.new(film_by_alhoritm, 'r:UTF-8')
+  content = f.read
+  f.close
+  content = JSON.parse(content)
 end
 
 file_path = File.dirname(__FILE__)
@@ -120,45 +125,26 @@ rescue Errno::ENOENT
 end
 
 algorithms_hash = JSON.parse(algorithms_data)
-# random_alhoritm = rand(algorithms_hash.size) + 1
-random_alhoritm = 4
-
-puts "Добрейший вечерок. Захотелось посмоть фильм?"
-sleep 0.3
-puts "Окей, я выбрал случайный алгоритм: #{random_alhoritm}"
-
-puts 'Теперь нужно првоерить, есть ли файл с этим алгоритмом?'
+random_alhoritm = rand(algorithms_hash.size) + 1
 
 film_by_alhoritm = file_path + "/films/#{random_alhoritm}.json"
 
 if File.exist?(film_by_alhoritm)
-  puts 'Да, такой файл есть.'
-  puts 'А если есть файл, то тогда нам нужно проверить актуальны ли там данные?'
 
-  f = File.new(film_by_alhoritm, 'r:UTF-8')
-  content = f.read
-  f.close
+  content = get_json_content(film_by_alhoritm)
 
-  content = JSON.parse(content)
   file_date = content['date']
-
   file_date = Date.strptime(file_date, '%F')
   subtr_date = (date - file_date).to_i
 
   if subtr_date < 7 + random_alhoritm
-
-    puts 'Да, дата в порядке, можно выбирать случайный фильм!'
     puts random_film(content)
-
   else
-
-    puts 'Нет, с датой беда, слишком старая, нужно парсить по новой!'
     film_parser(random_alhoritm, algorithms_hash, date, film_by_alhoritm)
-    puts random_film(content)
-
+    puts random_film(get_json_content(film_by_alhoritm))
   end
 
 else
   film_parser(random_alhoritm, algorithms_hash, date, film_by_alhoritm)
-  puts random_film(content)
+  puts random_film(get_json_content(film_by_alhoritm))
 end
